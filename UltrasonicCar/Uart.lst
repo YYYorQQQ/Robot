@@ -1,0 +1,101 @@
+C51 COMPILER V9.01   UART                                                                  09/28/2019 21:24:15 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE UART
+OBJECT MODULE PLACED IN Uart.obj
+COMPILER INVOKED BY: D:\SoftwareInstalled\keil4\C51\BIN\C51.EXE Uart\Uart.c BROWSE INCDIR(.\Delay;.\HCSR04;.\Motor;.\Uar
+                    -t) DEBUG OBJECTEXTEND PRINT(.\Uart.lst) OBJECT(Uart.obj)
+
+line level    source
+
+   1          
+   2          
+   3          #include "uart.h"
+   4          #include "motor.h"
+   5          
+   6          
+   7          /*
+   8          * 超声波调试时发送数据使用
+   9          * 定义定时器2（T2）作为波特率发生器
+  10          * 9600bps  11.0592MHz
+  11          */
+  12          void Uart_Init()  //定时器2作为波特率发生器
+  13          {
+  14   1              TCLK=1;           //选择定时器2作为串行发送波特率发生器 
+  15   1              RCLK=1;           //选择定时器2作为串行接受波特率发生器
+  16   1                                        //T2CON  T2定时器寄存器
+  17   1              
+  18   1      
+  19   1              RCAP2H=0xFF;  
+  20   1              RCAP2L=0xDC;  //9600bps  11.0592MHz
+  21   1      
+  22   1              SCON=0x50;        //串行口控制寄存器    0101 0000 10位异步收发(8位数据) 允许串行口接收数据
+  23   1                                        //D0 D1 发送/接受中断标志位  内部硬件值1  必需软件清零
+  24   1                                        //方式1   TXD-P3.1    RXD-P3.0
+  25   1      
+  26   1              PCON=0x00;        //电源管理寄存器
+  27   1      
+  28   1              TR2=1;            //启动标志-启动T2
+  29   1              EA=1;
+  30   1              ET2=1;            //使能
+  31   1              PS=0;             //串行口中断定义为低优先级中断
+  32   1      }
+  33          
+  34          
+  35          /*
+  36          * 中断服务函数
+  37          */
+  38          void Usart() interrupt 4
+  39          {
+  40   1              unsigned char receiveData;
+  41   1              receiveData=SBUF; 
+  42   1              RI = 0;       //清除接收中断标志位
+  43   1      }
+  44          
+  45          
+  46          
+  47          /*
+  48          * 
+  49          */
+  50          char putchar(char c)    //putchar重载，可直接调用printf，若使用scanf请重载getchar
+  51          {  
+  52   1              hal_uart_putchar(c);  
+  53   1              return c;  
+  54   1      }  
+C51 COMPILER V9.01   UART                                                                  09/28/2019 21:24:15 PAGE 2   
+
+  55          
+  56          
+  57          /*
+  58          *
+  59          */
+  60          void hal_uart_putchar(char i) 
+  61          {  
+  62   1              ES = 0;                 //关闭串口中断 
+  63   1              TI = 0;                 //清除发送中断标志位
+  64   1              SBUF = i;   
+  65   1              while(TI == 0); //等待中断发生，中断发生TI硬件置1 
+  66   1              TI = 0;                 //清除发送中断标志位
+  67   1              ES = 1;                 //开启串口中断
+  68   1      }  
+  69          
+  70          
+  71          
+  72          
+  73          
+  74          
+  75          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     53    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       2
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,8 @@
+"STARTUP.obj",
+"main.obj",
+"Motor.obj",
+"Uart.obj",
+"HCSR04.obj",
+"delay.obj" 
+TO "UltrasonicCar" 
+RAMSIZE(256) 
