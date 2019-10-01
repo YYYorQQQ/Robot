@@ -1,0 +1,147 @@
+C51 COMPILER V9.01   MAIN                                                                  10/01/2019 21:25:10 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.obj
+COMPILER INVOKED BY: D:\SoftwareInstalled\keil4\C51\BIN\C51.EXE Main\main.c BROWSE INCDIR(.\Delay;.\Motor;.\Uart) DEBUG 
+                    -OBJECTEXTEND PRINT(.\main.lst) OBJECT(main.obj)
+
+line level    source
+
+   1          /*******************************************************
+   2          2018中国教育机器大赛人双人擂台红外小车程序
+   3          芯片：AT89S52
+   4          晶振：11.0592
+   5          外围器件：      红外避障                4       
+   6                                  红外循迹                3
+   7                                  升降压模块          1
+   8          ********************************************************/
+   9          #include "uart.h"
+  10          #include "motor.h"
+  11          /*红外循迹引脚定义*/
+  12          sbit INHL=P3^7;
+  13          sbit INHR=P3^6;
+  14          sbit INBM=P3^5;
+  15          /*红外避障引脚定义*/
+  16          sbit INTHM=P3^2;
+  17          sbit INTHL=P1^2;
+  18          sbit INTHR=P1^3;
+  19          sbit INTBM=P1^4;
+  20          
+  21          #define MAX_SPEED 200
+  22          
+  23          void main()
+  24          {
+  25   1              Uart_Init();
+  26   1              InitTimer1();
+  27   1              while(1)
+  28   1              {       
+  29   2                      //红外相比于超声波来说不用测距,更加简单
+  30   2                      if(IN_counter==0)                               //红外循迹延时结束
+  31   2                      {
+  32   3                              if(INHR==1&&INHL==1&&INBM==1)
+  33   3                              {
+  34   4                                      if(INT_counter==0)      //敌方检测，红外避障延时结束
+  35   4                                      {
+  36   5                                              INT_flag=0;
+  37   5                                              if(INTBM==0)                    //后方检测到敌人存在
+  38   5                                              {
+  39   6                                                      if(IN_flag=='R')        //白线在右边向左旋转
+  40   6                                                      {
+  41   7                                                              Rv=MAX_SPEED;
+  42   7                                                              Lv=-MAX_SPEED;          //白线在左边向右旋转
+  43   7                                                      }
+  44   6                                                      else
+  45   6                                                      {
+  46   7                                                              Rv=-MAX_SPEED;
+  47   7                                                              Lv=MAX_SPEED;
+  48   7                                                      }
+  49   6                                                      INT_counter=400;
+  50   6                                                      INT_flag++;
+  51   6                                              }
+  52   5                                              if(INTHR==0)                    //右方检测到敌人存在
+  53   5                                              {
+  54   6                                                      Rv=-MAX_SPEED;
+C51 COMPILER V9.01   MAIN                                                                  10/01/2019 21:25:10 PAGE 2   
+
+  55   6                                                      Lv=MAX_SPEED;
+  56   6                                                      INT_counter=200;
+  57   6                                                      INT_flag++;
+  58   6                                              }
+  59   5                                              if(INTHL==0)                    //左放检测到敌人存在
+  60   5                                              {
+  61   6                                                      Rv=MAX_SPEED;
+  62   6                                                      Lv=-MAX_SPEED;
+  63   6                                                      INT_counter=200;
+  64   6                                                      INT_flag++;
+  65   6                                              }
+  66   5                                              if(INTHM==0)                    //前方检测到敌人存在
+  67   5                                              {
+  68   6                                                      Rv=MAX_SPEED;
+  69   6                                                      Lv=MAX_SPEED;
+  70   6                                                      INT_flag++;
+  71   6                                              }
+  72   5                                              if(INT_flag==0)                 //如果都未能检测到,全速直行
+  73   5                                              {
+  74   6                                                      Rv=MAX_SPEED;
+  75   6                                                      Lv=MAX_SPEED;
+  76   6                                              }
+  77   5                                      }
+  78   4                                      else
+  79   4                                      {
+  80   5                                              if(INTHM==0)                    //前方红外避障检测到
+  81   5                                              {
+  82   6                                                      INT_counter=0;          //停止红外避障旋转延时  
+  83   6                                              }
+  84   5                                      }
+  85   4                              }
+  86   3                              else                                                                            //场地检测
+  87   3                              {
+  88   4                                      if(INBM == 0)                                   //后
+  89   4                                      {
+  90   5                                              Lv=MAX_SPEED;           
+  91   5                                              Rv=MAX_SPEED;                                           //前进
+  92   5                                              IN_counter=200;
+  93   5                                      }
+  94   4                                      if(INHL == 0)                                           //左
+  95   4                                      {
+  96   5                                              Lv=MAX_SPEED;
+  97   5                                              Rv=-MAX_SPEED;                                  //右转
+  98   5                                              IN_flag='L';
+  99   5                                              IN_counter=200; 
+ 100   5                                      }
+ 101   4                                      if(INHR == 0)                                           //右
+ 102   4                                      {
+ 103   5                                              Lv=-MAX_SPEED;
+ 104   5                                              Rv=MAX_SPEED;                                           //左转
+ 105   5                                              IN_flag='R';
+ 106   5                                              IN_counter=200;
+ 107   5                                      }
+ 108   4      
+ 109   4                              }
+ 110   3                      }
+ 111   2                      else
+ 112   2                      {
+ 113   3                              if(INTHM==0)                                            //前方红外避障检测到
+ 114   3                              {
+ 115   4                                      IN_counter=0;                                   //停止红外循迹旋转延时
+ 116   4                              }       
+C51 COMPILER V9.01   MAIN                                                                  10/01/2019 21:25:10 PAGE 3   
+
+ 117   3                      }
+ 118   2              }
+ 119   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    272    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

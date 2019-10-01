@@ -1,0 +1,7 @@
+"STARTUP.obj",
+"main.obj",
+"Motor.obj",
+"Uart.obj",
+"delay.obj" 
+TO "InfraredCar" 
+RAMSIZE(256) 

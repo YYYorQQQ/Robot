@@ -1,0 +1,101 @@
+C51 COMPILER V9.01   MOTOR                                                                 10/01/2019 21:25:10 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE MOTOR
+OBJECT MODULE PLACED IN Motor.obj
+COMPILER INVOKED BY: D:\SoftwareInstalled\keil4\C51\BIN\C51.EXE Motor\Motor.c BROWSE INCDIR(.\Delay;.\Motor;.\Uart) DEBU
+                    -G OBJECTEXTEND PRINT(.\Motor.lst) OBJECT(Motor.obj)
+
+line level    source
+
+   1          /************************************************************************
+   2          电机驱动程序
+   3          
+   4                  伺服舵机的控制是通过一段高脉冲的长度来控制的， 1.5ms停止，1.7ms全速正
+   5          传，1.3ms全速反转，高脉冲之后为一段20ms左右的低电平
+   6                  本程序通过变量speedleft，speedright来控制定时器定时宽度，周期性的执行
+   7          speedleft脉冲---低电平延时---speedright脉冲---低电平延时,从而实现不用延时
+   8          高精度的控制电机转速
+   9          ************************************************************************/
+  10          #include "motor.h"
+  11          sbit left=P1^0;         //控制右轮
+  12          sbit right=P1^1;        //控制左轮
+  13          unsigned char Motor_counter=0;                                  //电机区间调制循环变量
+  14          unsigned int IN_counter=0;                                              //红外循迹计数器
+  15          unsigned int speedleft=1382,speedright=1382;    //1382*1.08507=1.5ms
+  16          unsigned char speed_H=0xff;                                             //TH1 temp
+  17          unsigned char speed_L=0x00;                                             //TL1 temp
+  18          unsigned int INT_counter=0;                                             //红外避障计数器
+  19          unsigned char IN_flag=0;                                                //红外循迹标记位 'R','L'
+  20          unsigned char INT_flag=0;                                               //INT_flag个红外避障检测到障碍物
+  21          int Rv=0,Lv=0;                                                                  //电机控制-185~185 反转-停止-正传
+  22          void InitTimer1(void)
+  23          {
+  24   1              TMOD |= 0x10;
+  25   1              TH1 = 0x0DC;
+  26   1              TL1 = 0x00;
+  27   1              EA  = 1;
+  28   1              ET1 = 1;
+  29   1              TR1 = 1;
+  30   1              PT1 = 1;
+  31   1              P1  = 0xff;
+  32   1              P3  = 0xff;
+  33   1              PT1=1;
+  34   1      }
+  35          void Timer1Interrupt(void) interrupt 3
+  36          {
+  37   1              speedleft=1382+Lv;
+  38   1              speedright=1382-Rv;     
+  39   1              TH1=speed_H;                                    
+  40   1              TL1=speed_L;
+  41   1              if(IN_counter>0)IN_counter--;           
+  42   1              if(INT_counter>0)INT_counter--;         
+  43   1              /*舵机控制*/
+  44   1              Motor_counter++;                                                                        
+  45   1              if(Motor_counter>7)Motor_counter=0;
+  46   1              switch(Motor_counter)
+  47   1              {
+  48   2                      case 0:                                         
+  49   2                              speed_H=0xf1;                   
+  50   2                              speed_L=0x9a;
+  51   2                              left=1;
+  52   2                      break;
+  53   2                      case 1:                                         
+  54   2                      case 2:                                         
+C51 COMPILER V9.01   MOTOR                                                                 10/01/2019 21:25:10 PAGE 2   
+
+  55   2                      case 3:
+  56   2                              speed_H=(0xffff-speedright)>>8;
+  57   2                              speed_L=(0xffff-speedright)&0x00ff;
+  58   2                              left=0;
+  59   2                      break;
+  60   2                      case 4:                                                 
+  61   2                              speed_H=0xf1;
+  62   2                              speed_L=0x9a;
+  63   2                              right=1;
+  64   2                      break;
+  65   2                      case 5:                                                 
+  66   2                      case 6: 
+  67   2                      case 7:                 
+  68   2                              speed_H=(0xffff-speedleft)>>8;
+  69   2                              speed_L=(0xffff-speedleft)&0x00ff;
+  70   2                              right=0;
+  71   2                      break;
+  72   2                      default:break;  
+  73   2              }
+  74   1      }
+  75          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    195    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     17    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

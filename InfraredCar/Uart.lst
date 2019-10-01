@@ -1,0 +1,63 @@
+C51 COMPILER V9.01   UART                                                                  10/01/2019 21:25:10 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE UART
+OBJECT MODULE PLACED IN Uart.obj
+COMPILER INVOKED BY: D:\SoftwareInstalled\keil4\C51\BIN\C51.EXE Uart\Uart.c BROWSE INCDIR(.\Delay;.\Motor;.\Uart) DEBUG 
+                    -OBJECTEXTEND PRINT(.\Uart.lst) OBJECT(Uart.obj)
+
+line level    source
+
+   1          #include "uart.h"
+   2          #include "motor.h"
+   3          void Uart_Init()  //定时器2作为波特率发生器
+   4          {
+   5   1              TCLK=1;
+   6   1              RCLK=1; 
+   7   1              RCAP2H=0xFF;  //9600bps  11.0592MHz
+   8   1              RCAP2L=0xDC;
+   9   1              SCON=0x50; 
+  10   1              PCON=0x00; 
+  11   1              TR2=1;
+  12   1              EA=1;
+  13   1              ET2=1;
+  14   1              PS=0;
+  15   1      }
+  16          void Usart() interrupt 4
+  17          {
+  18   1              unsigned char receiveData;
+  19   1              receiveData=SBUF; 
+  20   1              RI = 0;           //清除接收中断标志位
+  21   1      }
+  22          char putchar(char c)    //putchar重载，可直接调用printf，若使用scanf请重载getchar
+  23          {  
+  24   1              hal_uart_putchar(c);  
+  25   1              return c;  
+  26   1      }  
+  27          void hal_uart_putchar(char i) 
+  28          {  
+  29   1              ES = 0;  
+  30   1              TI = 0; 
+  31   1              SBUF = i;   
+  32   1              while(TI == 0); 
+  33   1              TI = 0;   
+  34   1              ES = 1;  
+  35   1      }  
+  36          
+  37          
+  38          
+  39          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     53    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       2
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
