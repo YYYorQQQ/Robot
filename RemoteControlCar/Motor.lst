@@ -1,0 +1,149 @@
+C51 COMPILER V9.01   MOTOR                                                                 10/02/2019 21:41:36 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE MOTOR
+OBJECT MODULE PLACED IN Motor.obj
+COMPILER INVOKED BY: D:\SoftwareInstalled\keil4\C51\BIN\C51.EXE Motor\Motor.c BROWSE INCDIR(.\Delay;.\INRecv;.\Motor;.\U
+                    -art) DEBUG OBJECTEXTEND PRINT(.\Motor.lst) OBJECT(Motor.obj)
+
+line level    source
+
+   1          /************************************************************************
+   2          电机驱动程序
+   3          
+   4                          伺服舵机的控制是通过一段高脉冲的长度来控制的， 1.5ms停止，1.7ms全速正
+   5          传，1.3ms全速反转，高脉冲之后为一段20ms左右的低电平。
+   6                          本程序通过变量speedleft，speedright来控制定时器定时宽度，周期性的执行
+   7          speedleft脉冲---低电平延时---speedright脉冲---低电平延时,从而实现不用延时
+   8          高精度的控制电机转速。
+   9          ************************************************************************/
+  10          #include "motor.h"
+  11          #include "INRecv.h"
+  12          #define MAX_SPEED 200
+  13          sbit left=P1^0;    //控制右轮
+  14          sbit right=P1^1;         //控制左轮
+  15          /*红外循迹引脚定义 1为黑线，0为白线*/
+  16          sbit INHL=P3^6;
+  17          sbit INHR=P3^7;
+  18          sbit INBM=P3^5;
+  19          
+  20          unsigned char Motor_counter=0;                                                          //电机区间调制循环变量
+  21          unsigned char IN_counter=0;                                                                             //红外循迹计数器
+  22          unsigned int speedleft=1382,speedright=1382;    //1382*1.08507=1.5ms
+  23          unsigned char speed_H=0xff;                                                                             //TH1 temp
+  24          unsigned char speed_L=0x00;                                                                             //TL1 temp
+  25          int Rv=0,Lv=0;                                                                                                  //电机控制-185~185 反转-停止-正传
+  26          int Rv_temp,Lv_temp;                                                                                    //Rv temp、Lv temp
+  27          
+  28          void MotorControl(void)                                                                                 //将接收到的数据处理成电机速度控制量
+  29          {
+  30   1              //7表示停止,0和f表示全速转
+  31   1              Lv_temp = ((Control/16) - 7) * 30;
+  32   1              Rv_temp = ((Control&0x0f) - 7) * 30;
+  33   1      
+  34   1      //      int X_temp,Y_temp;                                                                                                      
+  35   1      //      X_temp=Control/16;
+  36   1      //      Y_temp=Control&0x0f;                              //分离X、Y数据
+  37   1      //      X_temp-=7;
+  38   1      //      Y_temp-=7;
+  39   1      //      Lv_temp=(X_temp-Y_temp)*26;
+  40   1      //      Rv_temp=(X_temp+Y_temp)*26;                                                                     //转化速度
+  41   1      }
+  42          void InitTimer1(void)
+  43          {
+  44   1              TMOD |= 0x10;
+  45   1          TH1 = 0x0DC;
+  46   1          TL1 = 0x00;
+  47   1          EA = 1;
+  48   1          ET1 = 1;
+  49   1          TR1 = 1;
+  50   1              PT1=1;
+  51   1      }
+  52          void Timer1Interrupt(void) interrupt 3
+  53          {
+  54   1              speedleft=1382+Lv;
+C51 COMPILER V9.01   MOTOR                                                                 10/02/2019 21:41:36 PAGE 2   
+
+  55   1              speedright=1382-Rv;                     //转换速度值
+  56   1              TH1=speed_H;                                            //使用上一次计算好的定时器宽度装初值
+  57   1              TL1=speed_L;
+  58   1              if(IN_counter>0)IN_counter--;           //红外循迹延时
+  59   1              Motor_counter++;                                                                          
+  60   1              if(Motor_counter>7)Motor_counter=0;
+  61   1              Lost_counter++;                                         //遥控器超时计数
+  62   1      
+  63   1              if(IN_counter==0)                                       //红外循迹延时结束
+  64   1              {
+  65   2                      if(INHR==1&&INHL==1&&INBM==1)
+  66   2                      {
+  67   3                              Rv=Rv_temp;
+  68   3                              Lv=Lv_temp;                                             //遥控速度
+  69   3                      }
+  70   2                      else
+  71   2                      {
+  72   3                              if(INHR==0)                                             //右
+  73   3                              {
+  74   4                                      Lv=-MAX_SPEED;
+  75   4                                      Rv=MAX_SPEED;                           //左转
+  76   4                                      IN_counter=80;
+  77   4                              }
+  78   3                              if(INHL==0)                                             //左
+  79   3                              {
+  80   4                                      Lv=MAX_SPEED;
+  81   4                                      Rv=-MAX_SPEED;                          //右转
+  82   4                                      IN_counter=80;
+  83   4                              }
+  84   3                              if(INBM==0)                                             //后
+  85   3                              {
+  86   4                                      Lv=MAX_SPEED;
+  87   4                                      Rv=MAX_SPEED;                           //前进
+  88   4                                      IN_counter=100;
+  89   4                              }
+  90   3                      }
+  91   2              }       
+  92   1              switch(Motor_counter)
+  93   1              {
+  94   2                      case 0:                                                         //Left高脉冲
+  95   2                              speed_H=0xf1;                           //为下一个区间(低电平延时)装定时器初值
+  96   2                              speed_L=0x9a;
+  97   2                              left=1;
+  98   2                      break;
+  99   2                      case 1:                                                         //低电平延时
+ 100   2                      case 2:                                                         //为使Time1具有更准确的延时作用，将低电平延时分为多个区间
+ 101   2                      case 3:
+ 102   2                              speed_H=(0xffff-speedright)>>8;
+ 103   2                              speed_L=(0xffff-speedright)&0x00ff;
+ 104   2                              left=0;
+ 105   2                      break;
+ 106   2                      case 4:                                                         //Right高脉冲
+ 107   2                              speed_H=0xf1;
+ 108   2                              speed_L=0x9a;
+ 109   2                              right=1;
+ 110   2                      break;
+ 111   2                      case 5:                                                         //低电平延时
+ 112   2                      case 6: 
+ 113   2                      case 7:                 
+ 114   2                              speed_H=(0xffff-speedleft)>>8;
+ 115   2                              speed_L=(0xffff-speedleft)&0x00ff;
+ 116   2                              right=0;
+C51 COMPILER V9.01   MOTOR                                                                 10/02/2019 21:41:36 PAGE 3   
+
+ 117   2                      break;
+ 118   2                      default:break;  
+ 119   2              }
+ 120   1      }
+ 121          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    289    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     16    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

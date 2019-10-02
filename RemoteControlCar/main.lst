@@ -1,0 +1,57 @@
+C51 COMPILER V9.01   MAIN                                                                  10/02/2019 21:41:35 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.obj
+COMPILER INVOKED BY: D:\SoftwareInstalled\keil4\C51\BIN\C51.EXE Main\main.c BROWSE INCDIR(.\Delay;.\INRecv;.\Motor;.\Uar
+                    -t) DEBUG OBJECTEXTEND PRINT(.\main.lst) OBJECT(main.obj)
+
+line level    source
+
+   1          /*******************************************************
+   2          2018中国教育机器大赛人双人擂台红外遥控小车程序
+   3          芯片：AT89S52
+   4          晶振：11.0592
+   5          外围器件：红外接收管    6       
+   6                            红外循迹              3
+   7                            升降压模块    1
+   8                            6输入与门             1
+   9          ********************************************************/
+  10          #include "uart.h"
+  11          #include "motor.h"
+  12          #include "INRecv.h"
+  13          void main()
+  14          {
+  15   1              InitTimer1();
+  16   1              INT0_Init();
+  17   1              Uart_Init();
+  18   1              Control = 0xee;
+  19   1              //printf("while begin~~\r\n");
+  20   1              while(1)
+  21   1              {
+  22   2      //              while(!INRecv_flag)                     //没有收到遥控器的信号通知则等待
+  23   2      //              {
+  24   2      //                      if(Lost_counter>2000)   //长时间没有接收到遥控器信号
+  25   2      //                      {       
+  26   2      //                              Lost_counter = 0;
+  27   2      //                              Control=0x0e;    
+  28   2      //                              MotorControl();
+  29   2      //                      }
+  30   2      //              }
+  31   2                      INRecv();
+  32   2              }
+  33   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     17    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

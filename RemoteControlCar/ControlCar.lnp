@@ -1,0 +1,8 @@
+"STARTUP.obj",
+"main.obj",
+"Uart.obj",
+"Motor.obj",
+"INRecv.obj",
+"delay.obj" 
+TO "ControlCar" 
+RAMSIZE(256) 

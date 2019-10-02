@@ -1,0 +1,149 @@
+C51 COMPILER V9.01   INRECV                                                                10/02/2019 21:41:36 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE INRECV
+OBJECT MODULE PLACED IN INRecv.obj
+COMPILER INVOKED BY: D:\SoftwareInstalled\keil4\C51\BIN\C51.EXE INRecv\INRecv.c BROWSE INCDIR(.\Delay;.\INRecv;.\Motor;.
+                    -\Uart) DEBUG OBJECTEXTEND PRINT(.\INRecv.lst) OBJECT(INRecv.obj)
+
+line level    source
+
+   1          #include "INRecv.h"
+   2          #include "uart.h"
+   3          #include "motor.h"
+   4          unsigned short IrValue[6];
+   5          unsigned char Time;
+   6          unsigned char Control=0x77;
+   7          unsigned int Lost_counter=0;    //遥控器连接超时计数器
+   8          bit INRecv_flag=0;                              //接收遥控器信号标志位,1代表接收到,0代表未接收到
+   9          sbit IRIN=P3^2;
+  10          void DelayMs(unsigned int x)    //0.014ms
+  11          {
+  12   1              unsigned char i;
+  13   1              while(x--)
+  14   1              {
+  15   2                      for (i = 0; i<13; i++);
+  16   2              }
+  17   1      }
+  18          void INT0_Init()
+  19          {
+  20   1              IT0=1;          //下降沿触发
+  21   1              EX0=1;
+  22   1              PX0=0;
+  23   1              EA=1;
+  24   1      }
+  25          
+  26          void INT_0() interrupt 0
+  27          {
+  28   1              INRecv_flag=1;  //接收标记
+  29   1      }
+  30          void INRecv(void)
+  31          {
+  32   1              unsigned int j,k;
+  33   1              unsigned int err;
+  34   1              EX0=0;
+  35   1              INRecv_flag=0;
+  36   1              Time=0; 
+  37   1      //      DelayMs(70);
+  38   1      //      if(Lost_counter>2000)
+  39   1      //              Control=0xee;
+  40   1              
+  41   1              if(IRIN==0)                     //确认是否真的接收到正确的信号
+  42   1              {        
+  43   2                      printf("IRAN begin!!\r\n");
+  44   2                      err=850;                                //1000*10us=10ms,超过说明接收到错误的信号
+  45   2                      /*当两个条件都为真是循环，如果有一个条件为假的时候跳出循环，免得程序出错的时
+  46   2                      侯，程序死在这里*/      
+  47   2                      while((IRIN==0)&&(err>0))       //等待前面9ms的低电平过去               
+  48   2                      {                       
+  49   3                              DelayMs(1);     //0.014ms
+  50   3                              err--;
+  51   3                      } 
+  52   2                      if(IRIN==1)                                     //如果正确等到9ms低电平
+  53   2                      {
+  54   3                              err=500;
+C51 COMPILER V9.01   INRECV                                                                10/02/2019 21:41:36 PAGE 2   
+
+  55   3                              while((IRIN==1)&&(err>0))       //等待4.5ms的起始高电平过去
+  56   3                              {
+  57   4                                      DelayMs(1);
+  58   4                                      err--;
+  59   4                              }
+  60   3                              for(k=0;k<1;k++)                //共有4组数据
+  61   3                              {                               
+  62   4                                      for(j=0;j<8;j++)        //接收一组数据
+  63   4                                      {
+  64   5      
+  65   5                                              err=60;         
+  66   5                                              while((IRIN==0)&&(err>0))       //等待信号前面的560us低电平过去
+  67   5                                              {
+  68   6                                                      DelayMs(1);
+  69   6                                                      err--;
+  70   6                                              }
+  71   5                                              err=500;
+  72   5                                              while((IRIN==1)&&(err>0))       //计算高电平的时间长度。
+  73   5                                              {
+  74   6                                                      DelayMs(1);//0.014ms
+  75   6                                                      Time++;
+  76   6                                                      err--;
+  77   6                                                      if(Time>300)      
+  78   6                                                      {
+  79   7                                                              printf("Time is too long !!\r\n");
+  80   7                                                              EX0=1;
+  81   7                                                              return;
+  82   7                                                      }
+  83   6                                              }
+  84   5                                              IrValue[k]>>=1;         //k表示第几组数据
+  85   5                                              if(Time>=8)                     //如果高电平出现大于565us，那么是1
+  86   5                                              {
+  87   6                                                      IrValue[k]|=0x80;
+  88   6                                              }
+  89   5                                              Time=0;                         //用完时间要重新赋值                                                    
+  90   5                                      }
+  91   4                                      //printf("======== the %d data %x ======= \r\n", k, IrValue[k]);
+  92   4                              }
+  93   3                      }
+  94   2      //              if(IrValue[2]!=~IrValue[3])
+  95   2      //              {
+  96   2      //                      printf("Data is error !!\r\n");
+  97   2      //                      EX0=1;
+  98   2      //                      return;
+  99   2      //              }
+ 100   2                      printf("IrValue[0]: %x\n", IrValue[0]);
+ 101   2                      if (IrValue[0] == 0x8d) {
+ 102   3                              Control = 0xee; //前进
+ 103   3                      } else if (IrValue[0] == 0x2b) {
+ 104   3                              Control = 0x00;//后退
+ 105   3                      } else if (IrValue[0] == 0x87) {
+ 106   3                              Control = 0xe0;//右转
+ 107   3                      } else if(IrValue[0] == 0x89) {
+ 108   3                              Control = 0x0e;//左转
+ 109   3                      } else if(IrValue[0] == 0x81) {
+ 110   3                              Control = 0x77;//停止
+ 111   3                      } else {
+ 112   3                              Control = 0xee;//按错键-前进
+ 113   3                      }
+ 114   2      
+ 115   2                      //Control=IrValue[0];            //将接收到的数据的数据码存储起来,用来调整舵机
+ 116   2                      Lost_counter=0;
+C51 COMPILER V9.01   INRECV                                                                10/02/2019 21:41:36 PAGE 3   
+
+ 117   2                      printf("Control : %x\r\n",Control);
+ 118   2              }
+ 119   1              MotorControl();
+ 120   1              EX0=1;
+ 121   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    420    ----
+   CONSTANT SIZE    =     68    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     16       6
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
