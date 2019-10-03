@@ -1,0 +1,74 @@
+C51 COMPILER V9.01   MAIN                                                                  10/03/2019 17:20:09 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.obj
+COMPILER INVOKED BY: D:\SoftwareInstalled\keil4\C51\BIN\C51.EXE Main\main.c BROWSE INCDIR(.\Delay;.\INSend;.\Main;.\Uart
+                    -;.\ADC) DEBUG OBJECTEXTEND PRINT(.\main.lst) OBJECT(main.obj)
+
+line level    source
+
+   1          /*******************************************************
+   2          2016中国教育机器大赛人双人擂台超声波小车程序
+   3          芯片：STC12C5A60S2
+   4          晶振：11.0592
+   5          外围器件：      0.4W红外发射管                  6
+   6                                  3W大功率红外发射管              1
+   7                                  8050三极管                              12
+   8                                  降压模块                                1
+   9          ********************************************************/
+  10          #include "INSend.h"
+  11          #include "ADC.h"
+  12          #include "delay.h"
+  13          #include "uart.h"
+  14          void main(void) 
+  15          {  
+  16   1              unsigned char Motor;
+  17   1              unsigned int Motor_temp;
+  18   1              INSend_Init();
+  19   1              InitADC();
+  20   1              Uart_Init();
+  21   1              while(1) 
+  22   1              { 
+  23   2                      unsigned char i;
+  24   2                      Motor_temp=0;
+  25   2                      for(i=0;i<100;i++)
+  26   2                      {
+  27   3                              Motor_temp+=GetADCResult(0); 
+  28   3                      }
+  29   2                      Motor_temp/=1600;                                                                       //取平均值
+  30   2                      Motor_temp=15-Motor_temp;                                       //X轴取反
+  31   2                      Motor=(unsigned char)Motor_temp;
+  32   2                      Motor<<=4;                                                                                              //装载高四位数据
+  33   2                      Motor_temp=0;
+  34   2                      for(i=0;i<100;i++)
+  35   2                      {
+  36   3                              Motor_temp+=(GetADCResult(1)); 
+  37   3                      }
+  38   2                      Motor_temp/=1600;                                                                       //Y轴
+  39   2                      Motor|=(unsigned char)Motor_temp; //装载低四位数据
+  40   2                      
+  41   2                      SendIRdata(Motor);
+  42   2                      printf("%x\n",Motor);
+  43   2                      delay_ms(110);
+  44   2              } 
+  45   1      }
+  46          
+  47          
+  48          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    153    ----
+   CONSTANT SIZE    =      4    ----
+   XDATA SIZE       =   ----    ----
+C51 COMPILER V9.01   MAIN                                                                  10/03/2019 17:20:09 PAGE 2   
+
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       4
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

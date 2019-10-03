@@ -1,0 +1,61 @@
+C51 COMPILER V9.01   ADC                                                                   10/03/2019 17:20:10 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE ADC
+OBJECT MODULE PLACED IN ADC.obj
+COMPILER INVOKED BY: D:\SoftwareInstalled\keil4\C51\BIN\C51.EXE ADC\ADC.c BROWSE INCDIR(.\Delay;.\INSend;.\Main;.\Uart;.
+                    -\ADC) DEBUG OBJECTEXTEND PRINT(.\ADC.lst) OBJECT(ADC.obj)
+
+line level    source
+
+   1          #include "ADC.h"
+   2          #include "intrins.h"
+   3          #include "uart.h"
+   4          
+   5          #define ADC_FLAG    0x10            //ADC complete flag
+   6          BYTE GetADCResult(BYTE ch)
+   7          {
+   8   1          ADC_CONTR = 0x80 | 0x00 | ch | 0x08;
+   9   1          _nop_();                        //Must wait before inquiry
+  10   1          _nop_();
+  11   1          _nop_();
+  12   1          _nop_();
+  13   1          while (!(ADC_CONTR & ADC_FLAG));//Wait complete flag
+  14   1          ADC_CONTR &= ~ADC_FLAG;         //Close ADC
+  15   1      
+  16   1          return ADC_RES;                 //Return ADC result
+  17   1      }
+  18          
+  19          void InitADC()
+  20          {
+  21   1          P1ASF = 0xff;                   //Open 8 channels ADC function
+  22   1          ADC_RES = 0;                    //Clear previous result
+  23   1          ADC_CONTR = 0x80 | 0x08;
+  24   1          Delay1(2);                       //ADC power-on and delay
+  25   1      }
+  26          
+  27          void Delay1(WORD n)
+  28          {
+  29   1          WORD x;
+  30   1      
+  31   1          while (n--)
+  32   1          {
+  33   2              x = 5000;
+  34   2              while (x--);
+  35   2          }
+  36   1      }
+  37          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     62    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

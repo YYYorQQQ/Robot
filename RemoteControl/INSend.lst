@@ -1,0 +1,204 @@
+C51 COMPILER V9.01   INSEND                                                                10/03/2019 17:20:10 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE INSEND
+OBJECT MODULE PLACED IN INSend.obj
+COMPILER INVOKED BY: D:\SoftwareInstalled\keil4\C51\BIN\C51.EXE INSend\INSend.c BROWSE INCDIR(.\Delay;.\INSend;.\Main;.\
+                    -Uart;.\ADC) DEBUG OBJECTEXTEND PRINT(.\INSend.lst) OBJECT(INSend.obj)
+
+line level    source
+
+   1          #include "INSend.h"
+   2          #define k 2
+   3          sbit OUT=P2^1; 
+   4          static bit OP; //红外发射管的亮灭 
+   5          static unsigned int count; //延时计数器 
+   6          static unsigned int endcount; //终止延时计数 
+   7          static unsigned char flag; //红外发送标志 
+   8          char iraddr1; //十六位地址的第一个字节 
+   9          char iraddr2; //十六位地址的第二个字节 
+  10          char senddat[5]=0x55; 
+  11          void delay1ms(unsigned int i) 
+  12          { 
+  13   1              unsigned char j; 
+  14   1              while(i--) 
+  15   1              { 
+  16   2                      for(j=0;j<115;j++); //1ms基准延时程序 
+  17   2              } 
+  18   1      } 
+  19          void InitTimer0(void)
+  20          {
+  21   1              TMOD = 0x01;
+  22   1              TH0 = 0x0FF;
+  23   1              TL0 = 0x0F4;
+  24   1              EA = 1;
+  25   1              ET0 = 1;
+  26   1              TR0 = 1;
+  27   1      }
+  28          void INSend_Init(void)
+  29          {
+  30   1              InitTimer0();
+  31   1              count = 0;
+  32   1              flag = 0; 
+  33   1              OP = 0; 
+  34   1              OUT = 0;  
+  35   1              iraddr1=0x00; 
+  36   1              iraddr2=0x01; 
+  37   1      }
+  38          void SendIRdata(char p_irdata) 
+  39          { 
+  40   1              int i; 
+  41   1              char irdata; //发送9ms的起始码 
+  42   1              endcount=346*k; 
+  43   1              flag=1; 
+  44   1              count=0; 
+  45   1              do{}while(count<endcount); //发送4.5ms的结果码 
+  46   1              endcount=173*k ; 
+  47   1              flag=0; 
+  48   1              count=0; 
+  49   1              do{}while(count<endcount); 
+  50   1              //发送十六位地址的前八位 
+  51   1              irdata=iraddr1; 
+  52   1              for(i=0;i<8;i++) 
+  53   1              { //先发送0.56ms的38KHZ红外波即编码中0.56ms的低电平 
+  54   2                      endcount=21*k; 
+C51 COMPILER V9.01   INSEND                                                                10/03/2019 17:20:10 PAGE 2   
+
+  55   2                      flag=1; 
+  56   2                      count=0; 
+  57   2                      do
+  58   2                      {}while(count<endcount); //停止发送红外信号即编码中的高电平 
+  59   2                      //if(irdata&0X01) //判断二进制数个位为1还是0 
+  60   2                      if(irdata-(irdata/2)*2) 
+  61   2                      { 
+  62   3                              endcount=65*k; //1为宽的高电平 
+  63   3                      } 
+  64   2                      else 
+  65   2                      { 
+  66   3                              endcount=21.5*k; //0为窄的高电平 
+  67   3                      } 
+  68   2                      flag=0; 
+  69   2                      count=0; 
+  70   2                      do{}while(count<endcount); 
+  71   2                      irdata=irdata>>1; 
+  72   2              } 
+  73   1              //发送十六位地址的后八位 
+  74   1              irdata=iraddr2; 
+  75   1              for(i=0;i<8;i++) 
+  76   1              { 
+  77   2                      endcount=21.5*k; 
+  78   2                      flag=1; 
+  79   2                      count=0; 
+  80   2                      do{}while(count<endcount); 
+  81   2                      // if(irdata&0X01) 
+  82   2                      if(irdata-(irdata/2)*2) 
+  83   2                      { 
+  84   3                              endcount=21.5*k; 
+  85   3                      } 
+  86   2                      else 
+  87   2                      { 
+  88   3                              endcount=21.5*k; 
+  89   3                      } 
+  90   2                      flag=0; 
+  91   2                      count=0; 
+  92   2                      do{}while(count<endcount); 
+  93   2                      irdata=irdata>>1; 
+  94   2              } 
+  95   1      
+  96   1              //发送八位数据 
+  97   1              irdata=p_irdata; 
+  98   1              for(i=0;i<8;i++) 
+  99   1              { 
+ 100   2                      endcount=21.5*k; 
+ 101   2                      flag=1; 
+ 102   2                      count=0; 
+ 103   2                      do{}while(count<endcount); 
+ 104   2                      if(irdata-(irdata/2)*2) 
+ 105   2                      //if(irdata&0X01) 
+ 106   2                      { 
+ 107   3                              endcount=65*k; 
+ 108   3                      } 
+ 109   2                      else 
+ 110   2                      { 
+ 111   3                              endcount=21.5*k; 
+ 112   3                      } 
+ 113   2                      flag=0; 
+ 114   2                      count=0; 
+ 115   2                      do{}while(count<endcount); 
+ 116   2                      irdata=irdata>>1; 
+C51 COMPILER V9.01   INSEND                                                                10/03/2019 17:20:10 PAGE 3   
+
+ 117   2              } 
+ 118   1              //发送后八位数据 
+ 119   1              irdata=~p_irdata; 
+ 120   1              for(i=0;i<8;i++) 
+ 121   1              { 
+ 122   2                      endcount=21.5*k; 
+ 123   2                      flag=1; 
+ 124   2                      count=0; 
+ 125   2                      do{}while(count<endcount); 
+ 126   2                      if(irdata-(irdata/2)*2) 
+ 127   2                      { 
+ 128   3                      endcount=65.5*k; 
+ 129   3                              } 
+ 130   2                      else 
+ 131   2                      { 
+ 132   3                              endcount=21.5*k; 
+ 133   3                      } 
+ 134   2                      flag=0; 
+ 135   2                      count=0; 
+ 136   2                      do{}while(count<endcount); 
+ 137   2                      irdata=irdata>>1; 
+ 138   2              } 
+ 139   1              endcount=65*k; 
+ 140   1              flag=1; 
+ 141   1              count=0; 
+ 142   1              do{}while(count<endcount); 
+ 143   1              flag=0; 
+ 144   1      } 
+ 145          void DelayUs2x(unsigned char t) 
+ 146          { 
+ 147   1              while(--t); 
+ 148   1      } 
+ 149          
+ 150          void DelayMs(unsigned char t) 
+ 151          { 
+ 152   1              while(t--) 
+ 153   1              { 
+ 154   2                      //大致延时1mS 
+ 155   2                      DelayUs2x(245*k); 
+ 156   2                      DelayUs2x(245*k); 
+ 157   2              } 
+ 158   1      }  
+ 159          void timeint(void) interrupt 1 
+ 160          { 
+ 161   1              TH0 = 0x0FF;
+ 162   1              TL0 = 0x0F4;;
+ 163   1              count++; 
+ 164   1              if(flag) 
+ 165   1              OUT=~OUT; 
+ 166   1      } 
+ 167          
+ 168          /*void delay() 
+ 169          { 
+ 170                  int i,j; 
+ 171                  for(i=0;i<400;i++) 
+ 172                          for(j=0;j<100;j++); 
+ 173                   
+ 174          }*/ 
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    536    ----
+C51 COMPILER V9.01   INSEND                                                                10/03/2019 17:20:10 PAGE 4   
+
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     12    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

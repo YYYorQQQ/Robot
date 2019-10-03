@@ -258,8 +258,8 @@
       <Focus>0</Focus>
       <ColumnNumber>98</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>59</TopLine>
-      <CurrentLine>75</CurrentLine>
+      <TopLine>1</TopLine>
+      <CurrentLine>1</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\INRecv\INRecv.c</PathWithFileName>
       <FilenameWithoutPath>INRecv.c</FilenameWithoutPath>
@@ -288,7 +288,7 @@
   </Group>
 
   <AlienFiles>
-    <PathWithFilename>C:\Users\DELL\Desktop\2018教育机器人擂台组\程序\RemoteControlCar\MOTOR\MOTOR.H</PathWithFilename>
+    <PathWithFilename>F:\BIT\github\Robot\RemoteControlCar\MOTOR\MOTOR.H</PathWithFilename>
     <TopLine>1</TopLine>
     <CurrentLine>4</CurrentLine>
     <Constant>0</Constant>
@@ -314,7 +314,7 @@
   </AlienFiles>
 
   <AlienFiles>
-    <PathWithFilename>C:\Users\DELL\Desktop\2018教育机器人擂台组\程序\RemoteControlCar\INRECV\INRECV.H</PathWithFilename>
+    <PathWithFilename>F:\BIT\github\Robot\RemoteControlCar\INRECV\INRECV.H</PathWithFilename>
     <TopLine>1</TopLine>
     <CurrentLine>8</CurrentLine>
     <Constant>0</Constant>
@@ -1680,7 +1680,7 @@
     <ActiveMDIGroup>0</ActiveMDIGroup>
     <MDIGroup>
       <Size>100</Size>
-      <ActiveTab>1</ActiveTab>
+      <ActiveTab>0</ActiveTab>
       <Documents>
         <Doc>
           <Name>.\Main\main.c</Name>
@@ -1691,8 +1691,8 @@
         <Doc>
           <Name>.\INRecv\INRecv.c</Name>
           <ColumnNumber>98</ColumnNumber>
-          <TopLine>59</TopLine>
-          <CurrentLine>75</CurrentLine>
+          <TopLine>1</TopLine>
+          <CurrentLine>1</CurrentLine>
         </Doc>
         <Doc>
           <Name>.\Motor\Motor.c</Name>
